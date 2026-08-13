@@ -1,0 +1,369 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>바다안전 해파리 지도</title><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"><style>body{margin:0;background:#eaf1f4;color:#12344b;font-family:Arial,'Noto Sans KR',sans-serif}main{max-width:480px;margin:auto;min-height:100vh;background:#f8fbfc;padding:18px}header{display:flex;gap:9px;align-items:center;margin-bottom:15px}header b{font-size:18px;color:#092f4f}header small{font-size:10px;color:#718494}header button{margin-left:auto;border:0;border-radius:10px;background:#fff;padding:10px}.hero{display:flex;justify-content:space-between;align-items:center;padding:8px 2px 16px}.hero h1{font-size:24px;line-height:1.35;margin:7px 0}.hero h1 b{color:#0d78a8}.hero p{font-size:12px;color:#718494;margin:0}.hero>span{font-size:44px}.card{background:#fff;border-radius:21px;padding:14px;box-shadow:0 7px 22px #dbe6ea}.map-title{display:flex;justify-content:space-between;margin-bottom:10px}.map-title b,.map-title small{display:block}.map-title small{font-size:10px;color:#718494;margin-top:3px}.map-title button,.back{border:0;border-radius:9px;background:#eef8fc;color:#0d78a8;padding:8px;font-size:11px}#map{height:415px;border-radius:14px}.legend{font-size:10px;color:#718494;padding-top:9px}.legend i{float:right}.hint{text-align:center;font-size:10px;color:#82939d;padding-top:8px}.action{width:100%;border:0;border-radius:15px;padding:16px;color:#fff;background:#e84e4e;font-size:16px;font-weight:bold;margin:13px 0}.action span{margin-left:8px;font-size:12px}.photo{width:100%;border:1px solid #cfe4ea;border-radius:13px;background:#f1fbfd;color:#126b8d;padding:13px;font-weight:bold;font-size:13px}.area-list h2{font-size:18px;margin:17px 0 10px}.area{display:flex;align-items:center;background:#fff;border:1px solid #e4edf2;border-radius:14px;padding:11px;margin:7px 0;cursor:pointer}.area .emoji{font-size:20px;width:35px}.area div{flex:1}.area b,.area small{display:block}.area b{font-size:12px}.area small{font-size:10px;color:#718494;margin-top:3px}.pill{font-size:10px;padding:5px 8px;border-radius:20px;font-weight:bold}.safe{background:#e6f8f1;color:#158661}.caution{background:#fff7df;color:#aa7a09}.danger{background:#ffeded;color:#d33f3f}.detail{margin-top:12px}.detail h1{font-size:21px;margin:7px 0 12px}.detail p{font-size:12px;line-height:1.6;border-top:1px solid #e4edf2;padding:10px 0;margin:0}.detail .route{color:#0d78a8}.detail .advice{font-weight:bold}.aid{width:100%;border:0;border-radius:14px;background:#e84e4e;color:#fff;padding:16px;font-size:15px;font-weight:bold;margin-top:13px}.modal{display:none;position:fixed;inset:0;background:#06233d99;align-items:end;justify-content:center;padding:14px;z-index:5}.modal.show{display:flex}.sheet{background:#fff;border-radius:22px;padding:23px 19px;max-width:480px;width:100%;max-height:90vh;overflow:auto;position:relative}.close{position:absolute;right:14px;top:10px;border:0;background:#f1f5f6;border-radius:50%;font-size:21px}.sheet h2{font-size:21px}.do,.dont,.urgent{border-radius:12px;padding:11px;margin:9px 0;font-size:11px;line-height:1.6}.do{background:#effaf5;color:#176b4c}.dont{background:#fff5f3;color:#98423a}.urgent{background:#fff0ed;color:#993d31}.note{font-size:9px;color:#899aa3}#preview img{width:100%;height:170px;object-fit:cover;border-radius:13px;margin:10px 0}.analysis{background:#f1f8fb;padding:13px;border-radius:12px;font-size:12px;line-height:1.7;margin:10px 0}.analysis .warn{color:#c44536;font-weight:bold}@media(min-width:600px){body{padding:24px}main{border-radius:28px;box-shadow:0 15px 45px #c7d4da}.modal{align-items:center}}
+</style></head><body><main><header><b>✦ 바다안전</b><small>해파리 알림센터</small><button onclick="alert('새로운 관측 소식이 없습니다')">🔔</button></header><section class="hero"><div><small>TODAY · 08.12</small><h1>오늘 바다,<br><b>안전하게 즐겨요</b></h1><p>원하는 해안 지역을 선택해 상태를 확인하세요.</p></div><span>☀️</span></section><section class="card" id="mapPanel"><div class="map-title"><div><b id="mapTitle">대한민국 전체 해파리 위험지도</b><small id="mapSub">우리나라 바다 전체 · 예시 데이터</small></div><button onclick="resetMap()">◎ 전체보기</button></div><div id="map"></div><div class="hint">지도를 확대하거나 관측 지점을 눌러 지역별 위험도를 확인하세요.</div><div class="legend">🟢 안전　 🟡 주의　 🔴 위험 <i>➝ 예상 이동경로</i></div></section><section id="homeActions"><button class="action" onclick="openModal('aidModal')">✚ <span>응급처치</span></button><button class="photo" onclick="photoInput.click()">▧ 해파리·피부 사진 분석하기</button><input id="photoInput" type="file" accept="image/*" hidden onchange="analyze(event)"></section><section class="area-list" id="areas"><h2>주요 관측 지역</h2><div id="list"></div></section><section id="detailPanel" hidden><button class="back" onclick="backToMap()">‹ 지도 다시 보기</button><div class="detail" id="detail"></div><button class="aid" onclick="openModal('aidModal')">✚ 응급처치 보기</button></section></main><div class="modal" id="aidModal"><div class="sheet"><button class="close" onclick="closeModal('aidModal')">×</button><h2>해파리에 쏘였을 때</h2><div class="do"><b>✓ 해야 할 행동</b><ol><li>물 밖의 안전한 곳으로 이동</li><li>장갑이나 카드로 촉수를 조심스럽게 제거</li><li>바닷물로 충분히 씻기</li><li>통증이 지속되면 의료기관 방문</li></ol></div><div class="dont"><b>× 하면 안 되는 행동</b><ul><li>상처를 문지르거나 긁지 않기</li><li>수돗물·알코올·식초를 임의로 사용하지 않기</li><li>맨손으로 촉수를 만지지 않기</li></ul></div><div class="urgent"><b>🚨 즉시 119 또는 의료기관</b><br>심한 통증, 호흡곤란, 전신 두드러기, 어지럼증, 구토, 의식저하가 있으면 즉시 도움을 요청하세요.</div><p class="note">※ 이 정보는 의료 진단이나 치료를 대신하지 않습니다.</p></div></div><div class="modal" id="photoModal"><div class="sheet"><button class="close" onclick="closeModal('photoModal')">×</button><h2>사진 분석 결과</h2><div id="preview"></div><div id="loading">사진을 분석하고 있어요…</div><div id="result" hidden></div><p class="note">사진만으로 병명이나 해파리 종류를 확정할 수 없습니다. 정확한 판단은 전문가의 확인이 필요합니다.</p></div></div><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script>const places=[{n:'부산 해운대·광안리',r:'주의',c:'caution',e:'🟡',count:12,t:'오늘 09:20',s:'노무라입깃해파리',dir:'동남동 → 해안 방향',ad:'주의 필요 · 현장 안내표지 확인',p:[[35.10,129.20],[35.15,129.15],[35.19,129.10]]},{n:'제주 협재·월정리',r:'위험',c:'danger',e:'🔴',count:27,t:'오늘 07:45',s:'작은부레관해파리',dir:'북동쪽 → 해안 접근',ad:'입수 자제 · 해수욕장 안내 확인',p:[[33.36,126.45],[33.42,126.33],[33.49,126.25]]},{n:'강릉 경포대',r:'안전',c:'safe',e:'🟢',count:0,t:'어제 16:10',s:'보름달물해파리',dir:'북동쪽 → 외해 방향',ad:'입수 가능 · 현장 표지 확인',p:[[37.73,128.98],[37.80,128.90],[37.87,128.83]]},{n:'울산 진하해수욕장',r:'주의',c:'caution',e:'🟡',count:6,t:'오늘 08:30',s:'보름달물해파리',dir:'동쪽 → 해안 평행 이동',ad:'주의 필요',p:[[35.32,129.50],[35.38,129.44],[35.45,129.40]]}];let map;function init(){list.innerHTML=places.map((o,i)=>`<article class="area" onclick="selectArea(${i})"><span class="emoji">${o.e}</span><div><b>${o.n}</b><small>${o.t} · ${o.s}</small></div><span class="pill ${o.c}">${o.r}</span></article>`).join('');map=L.map('map').setView([36.1,127.9],6);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(map);places.forEach((o,i)=>{let color=o.c==='danger'?'#e95757':o.c==='caution'?'#efb841':'#20b486';L.circleMarker(o.p[1],{radius:9,fillColor:color,color:'#fff',weight:3,fillOpacity:1}).addTo(map).on('click',()=>selectArea(i));L.polyline(o.p,{color,weight:3,dashArray:'7 7'}).addTo(map)})}function selectArea(i){let o=places[i];if(map.getZoom()<9){map.setView(o.p[1],10);mapTitle.textContent=o.n+' 좁은 해역';mapSub.textContent='현재 위치 → 예상 1시간 후 → 예상 3시간 후';alert('좁은 해역으로 확대했습니다. 마커를 다시 누르면 상세 화면이 열립니다.');return}detail.innerHTML=`<h1>${o.e} ${o.n}</h1><p><b>현재 해파리 위험도: ${o.r}</b></p><p><b>최근 해파리 관측 수</b><br>${o.count}개체</p><p><b>최근 관측 시간</b><br>${o.t}</p><p><b>관측된 해파리 종류</b><br>${o.s}<br>사진만으로 종류를 확정할 수 없으며 전문가 확인이 필요합니다.</p><p><b>현재 이동 방향</b><br>${o.dir}</p><p class="route"><b>예상 이동경로</b><br>현재 위치 → 예상 1시간 후 → 예상 3시간 후<br>지도 위 점선 경로를 따라 이동할 가능성이 있습니다.</p><p><b>위험도 전망</b><br>${o.r==='위험'?'앞으로 위험도가 높아질 가능성이 있습니다.':'현재 위험도는 크게 변하지 않을 것으로 예상됩니다.'}</p><p class="advice"><b>이용자 행동 권고</b><br>${o.ad}</p>`;mapPanel.hidden=true;homeActions.hidden=true;areas.hidden=true;detailPanel.hidden=false;scrollTo(0,0)}function backToMap(){detailPanel.hidden=true;mapPanel.hidden=false;homeActions.hidden=false;areas.hidden=false}function resetMap(){map.setView([36.1,127.9],6);mapTitle.textContent='대한민국 전체 해파리 위험지도';mapSub.textContent='우리나라 바다 전체 · 예시 데이터'}function openModal(id){document.getElementById(id).classList.add('show')}function closeModal(id){document.getElementById(id).classList.remove('show')}function analyze(e){let f=e.target.files[0];if(!f)return;preview.innerHTML='<img src="'+URL.createObjectURL(f)+'">';loading.style.display='block';result.hidden=true;openModal('photoModal');setTimeout(()=>{loading.style.display='none';result.hidden=false;result.innerHTML='<div class="analysis"><b>가능성 안내</b><br>사진에서 해파리 또는 피부 자극 흔적이 <b>있을 가능성이 있습니다.</b><br><br><b>예상 위험 수준</b><br>사진만으로 확정하기 어렵습니다. 통증·부종이 심하면 주의가 필요합니다.<br><br><b>일반적인 응급처치</b><br>물 밖으로 이동 → 촉수를 맨손으로 만지지 않고 제거 → 바닷물로 씻기<br><br><span class="warn">호흡곤란·의식저하·전신 증상이 있으면 즉시 119에 연락하세요.</span></div>'},1200)}addEventListener('load',init)</script></body></html>
+<script>
+function hideMapForAction(){['mapPanel','homeActions','areas'].forEach(id=>{const el=document.getElementById(id);if(el)el.hidden=true})}
+function restoreMapAfterAction(){['mapPanel','homeActions','areas'].forEach(id=>{const el=document.getElementById(id);if(el)el.hidden=false})}
+document.addEventListener('click',function(e){if(e.target.closest('.action')||e.target.closest('.photo'))hideMapForAction();if(e.target.closest('#aidModal .close')||e.target.closest('#photoModal .close'))restoreMapAfterAction()});
+</script>
+<script>
+window.addEventListener('load', function(){
+  const languageSelect=document.getElementById('languageSelect');
+  if(languageSelect) languageSelect.remove();
+  const headerButton=document.querySelector('header button');
+  if(headerButton){ headerButton.textContent='🔔'; headerButton.onclick=function(){alert('새로운 관측 소식이 없습니다');}; }
+  document.querySelectorAll('.hero small').forEach(function(el){ if(el.textContent.indexOf('TODAY')!==-1) el.textContent='TODAY · 08.13'; });
+  localStorage.removeItem('jellyMapLanguage');
+  const languageSelect=document.getElementById('languageSelect');
+  if(languageSelect) languageSelect.remove();
+  const headerButton=document.querySelector('header button');
+  if(headerButton){
+    headerButton.textContent='🔔';
+    headerButton.removeAttribute('aria-label');
+    headerButton.onclick=function(){alert('새로운 관측 소식이 없습니다');};
+  }
+});
+</script>
+<script>
+(function(){
+ const maps={en:{'부산만 보기':'Busan only','해파리에 쏘였을 때':'Jellyfish sting first aid','해야 할 행동':'What to do','하면 안 되는 행동':'What not to do','부산에서 자주 보이는 해파리':'Jellyfish commonly seen near Busan','노무라입깃해파리':'Nomura jellyfish','보름달물해파리':'Moon jellyfish','작은부레관해파리':'Bluebottle','커튼원양해파리':'Chrysaora jellyfish','해운대·광안리 해수욕장':'Haeundae·Gwangalli Beach','송정 해수욕장':'Songjeong Beach','다대포 해수욕장':'Dadaepo Beach','태종대·영도 해역':'Taejongdae·Yeongdo waters','오륙도·이기대 해역':'Oryukdo·Igidae waters','기장·일광 해수욕장':'Gijang·Ilgwang Beach'},ja:{'부산만 보기':'釜山のみ表示','해파리에 쏘였을 때':'クラゲに刺されたとき','해야 할 행동':'するべきこと','하면 안 되는 행동':'してはいけないこと','부산에서 자주 보이는 해파리':'釜山周辺でよく見られるクラゲ','노무라입깃해파리':'ノムラクラゲ','보름달물해파리':'ミズクラゲ','작은부레관해파리':'カツオノエボシ','커튼원양해파리':'カーテンクラゲ','해운대·광안리 해수욕장':'海雲台・広安里ビーチ','송정 해수욕장':'松亭ビーチ','다대포 해수욕장':'多大浦ビーチ','태종대·영도 해역':'太宗台・影島海域','오륙도·이기대 해역':'五六島・二妓台海域','기장·일광 해수욕장':'機張・日光ビーチ'},zh:{'부산만 보기':'仅查看釜山','해파리에 쏘였을 때':'被水母蜇伤时','해야 할 행동':'应该做什么','하면 안 되는 행동':'不要做什么','부산에서 자주 보이는 해파리':'釜山附近常见的水母','노무라입깃해파리':'越前水母','보름달물해파리':'海月水母','작은부레관해파리':'僧帽水母','커튼원양해파리':'帘水母','해운대·광안리 해수욕장':'海云台·广安里海滩','송정 해수욕장':'松亭海滩','다대포 해수욕장':'多大浦海滩','태종대·영도 해역':'太宗台·影岛海域','오륙도·이기대 해역':'五六岛·二妓台海域','기장·일광 해수욕장':'机张·日光海滩'}};
+ function apply(){const d=maps[localStorage.getItem('jellyMapLanguage')||'ko'];if(!d)return;const w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT),a=[];let n;while(n=w.nextNode())a.push(n);a.forEach(x=>{if(!x.__extraSource)x.__extraSource=x.nodeValue;let v=x.__extraSource;Object.keys(d).forEach(k=>v=v.split(k).join(d[k]));x.nodeValue=v;});}
+ window.addEventListener('load',()=>{apply();new MutationObserver(apply).observe(document.body,{childList:true,subtree:true});});window.addEventListener('pageshow',apply);
+})();
+</script>
+<script>
+// 전역 언어 상태: 상세 화면·모달·동적 목록이 만들어져도 동일한 언어를 유지합니다.
+(function(){
+  const translations={
+    en:{'바다안전':'jelly map','해파리 알림센터':'Jellyfish Alert Center','오늘 바다,':'The sea today,','안전하게 즐겨요':'Enjoy it safely','원하는 해안 지역을 선택해 상태를 확인하세요.':'Select a coastal area to check its condition.','응급처치':'First aid','응급처치 보기':'View first aid','주요 관측 지역':'Main observation areas','전체보기':'View all','지도 다시 보기':'Back to map','해파리 종류 보기':'View jellyfish species','해파리 출몰 위험도 추정':'Estimated jellyfish risk','현재 해파리 위험도':'Current jellyfish risk','최근 해파리 관측 수':'Recent jellyfish observations','최근 관측 시간':'Latest observation time','관측된 해파리 종류':'Observed jellyfish species','현재 이동 방향':'Current movement direction','예상 이동경로':'Expected movement path','위험도 전망':'Risk outlook','이용자 행동 권고':'Recommended action','현재 수온':'Current water temperature','해류 방향':'Current direction','위험도 산정':'Risk calculation','낮음':'Low','보통':'Moderate','높음':'High','테스트 데이터':'Test data','출처':'Sources','주의':'Caution','위험':'Danger','안전':'Safe','오늘':'Today','어제':'Yesterday','개체':'individuals'},
+    ja:{'바다안전':'jelly map','해파리 알림센터':'クラゲアラートセンター','오늘 바다,':'今日の海、','안전하게 즐겨요':'安全に楽しもう','원하는 해안 지역을 선택해 상태를 확인하세요.':'海岸地域を選択して状態を確認してください。','응급처치':'応急処置','응급처치 보기':'応急処置を見る','주요 관측 지역':'主な観測地域','전체보기':'全体を見る','지도 다시 보기':'地図に戻る','해파리 종류 보기':'クラゲの種類を見る','해파리 출몰 위험도 추정':'クラゲ出現リスク推定','현재 해파리 위험도':'現在のクラゲリスク','최근 해파리 관측 수':'最近のクラゲ観測数','최근 관측 시간':'最新の観測時刻','관측된 해파리 종류':'観測されたクラゲの種類','현재 이동 방향':'現在の移動方向','예상 이동경로':'予想移動経路','위험도 전망':'リスク予測','이용자 행동 권고':'利用者への推奨','현재 수온':'現在の水温','해류 방향':'海流の方向','위험도 산정':'リスク計算','낮음':'低い','보통':'中程度','높음':'高い','테스트 데이터':'テストデータ','출처':'出典','주의':'注意','위험':'危険','안전':'安全','오늘':'今日','어제':'昨日','개체':'個体'},
+    zh:{'바다안전':'jelly map','해파리 알림센터':'水母警报中心','오늘 바다,':'今天的大海，','안전하게 즐겨요':'安全地享受吧','원하는 해안 지역을 선택해 상태를 확인하세요.':'选择海岸地区查看状态。','응급처치':'急救','응급처치 보기':'查看急救方法','주요 관측 지역':'主要观测地区','전체보기':'查看全部','지도 다시 보기':'返回地图','해파리 종류 보기':'查看水母种类','해파리 출몰 위험도 추정':'水母出现风险估计','현재 해파리 위험도':'当前水母风险','최근 해파리 관측 수':'最近水母观测数','최근 관측 시간':'最近观测时间','관측된 해파리 종류':'观测到的水母种类','현재 이동 방향':'当前移动方向','예상 이동경로':'预计移动路线','위험도 전망':'风险预测','이용자 행동 권고':'行动建议','현재 수온':'当前水温','해류 방향':'海流方向','위험도 산정':'风险计算','낮음':'低','보통':'中','높음':'高','테스트 데이터':'测试数据','출처':'来源','주의':'注意','위험':'危险','안전':'安全','오늘':'今天','어제':'昨天','개체':'个体'}
+  };
+  function translate(){
+    const lang=localStorage.getItem('jellyMapLanguage')||'ko'; document.documentElement.lang=lang;
+    const dict=translations[lang]; if(!dict)return;
+    const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT); const nodes=[]; let n;
+    while(n=walker.nextNode()) nodes.push(n);
+    nodes.forEach(function(node){
+      if(!node.__sourceText) node.__sourceText=node.nodeValue;
+      let value=node.__sourceText;
+      Object.keys(dict).forEach(function(key){value=value.split(key).join(dict[key]);});
+      node.nodeValue=value;
+    });
+  }
+  window.addEventListener('load',function(){
+    translate();
+    new MutationObserver(function(){translate();}).observe(document.body,{childList:true,subtree:true});
+  });
+  window.addEventListener('pageshow',translate);
+  window.addEventListener('popstate',function(){setTimeout(translate,0);});
+})();
+</script>
+<script>
+// 축소된 지도에서 위치를 처음 눌러도 확대 후 상세 정보까지 바로 표시합니다.
+window.addEventListener('load', function(){
+  setTimeout(function(){
+    if (window.__selectAreaFixed || typeof window.selectArea !== 'function') return;
+    const originalSelectArea = window.selectArea;
+    window.selectArea = function(i){
+      if (typeof map !== 'undefined' && map.getZoom() < 9 && places[i]) {
+        map.setView(places[i].p[1], 10);
+        setTimeout(function(){ originalSelectArea(i); }, 0);
+        return;
+      }
+      originalSelectArea(i);
+    };
+    window.__selectAreaFixed = true;
+  }, 1000);
+});
+
+// 화살표를 각 점선 경로의 끝점에 배치합니다.
+window.addEventListener('load', function(){
+  setTimeout(function(){
+    if (typeof map === 'undefined') return;
+    map.eachLayer(function(layer){
+      if (layer.options && layer.options.icon && layer.options.icon.options && layer.options.icon.options.className === 'jelly-route-arrow') map.removeLayer(layer);
+    });
+    function addEndArrow(o){
+      if (!o || !o.p || o.p.length < 3) return;
+      const color = o.c === 'danger' ? '#e95757' : o.c === 'caution' ? '#efb841' : '#20b486';
+      const a = o.p[o.p.length - 2], b = o.p[o.p.length - 1];
+      const angle = Math.atan2(-(b[0]-a[0]), b[1]-a[1]) * 180 / Math.PI;
+      L.marker(b, {interactive:false, icon:L.divIcon({className:'jelly-route-arrow', html:'<span style="display:block;color:'+color+';transform:rotate('+angle+'deg)">➤</span>', iconSize:[24,24], iconAnchor:[12,12]})}).addTo(map);
+    }
+    if (typeof places !== 'undefined') places.forEach(addEndArrow);
+    if (typeof extraJellyAreas !== 'undefined') extraJellyAreas.forEach(addEndArrow);
+    if (typeof busanAreas !== 'undefined') busanAreas.forEach(addEndArrow);
+  }, 1200);
+});
+</script>
+
+<style>
+.jelly-info{display:flex;gap:12px;align-items:center}.jelly-info img{width:88px;height:88px;flex:0 0 88px;object-fit:cover;border-radius:10px;background:#dbeef4}.jelly-info div{flex:1}
+.jelly-types-button{width:100%;border:1px solid #cfe4ea;border-radius:13px;background:#fff;color:#126b8d;padding:13px;font-weight:bold;font-size:13px;margin-top:8px}
+.jelly-types-list{margin:12px 0 0;padding:0;list-style:none}
+.jelly-types-list li{background:#f1f8fb;border-radius:12px;padding:11px;margin:8px 0;font-size:12px;line-height:1.6}
+.jelly-types-list b{color:#0d78a8}
+</style>
+<style>
+.jelly-risk-box{margin-top:14px;padding:14px;border-radius:14px;background:#f1f8fb;border:1px solid #d8edf3}.jelly-risk-box h3{margin:0 0 8px;font-size:15px;color:#092f4f}.jelly-risk-summary{display:flex;align-items:center;justify-content:space-between;gap:10px}.jelly-risk-score{font-size:24px;font-weight:bold;color:#0d78a8}.jelly-risk-level{padding:6px 10px;border-radius:20px;font-size:11px;font-weight:bold}.jelly-risk-level.low{background:#e6f8f1;color:#158661}.jelly-risk-level.mid{background:#fff7df;color:#aa7a09}.jelly-risk-level.high{background:#ffeded;color:#d33f3f}.jelly-risk-box p{font-size:11px;line-height:1.6;margin:8px 0}.jelly-risk-meta{font-size:10px!important;color:#718494}.jelly-risk-sources a{color:#0d78a8}
+</style>
+<script>
+
+// 부산 해변별 해파리 출몰 위험도 추정: 공개 관측값을 활용한 테스트 데이터
+// 아래 점수 기준과 가중치는 과학적으로 확정된 기준이 아닌 서비스 구현용 임시 가중치입니다.
+const jellyRiskTestData = {
+  '해운대·광안리 해수욕장': {temp:27.1, previousTemp:26.8, current:'동남동 → 해안 방향', flow:'해변 방향', observed:'2026-08-13 10:00'},
+  '송정 해수욕장': {temp:27.3, previousTemp:27.0, current:'동쪽 → 해안 평행 이동', flow:'해안 평행', observed:'2026-08-13 10:00'},
+  '다대포 해수욕장': {temp:27.1, previousTemp:27.0, current:'남동쪽 → 해안 접근', flow:'해변 방향', observed:'2026-08-13 10:00'},
+  '태종대·영도 해역': {temp:27.0, previousTemp:26.7, current:'북동쪽 → 해안 평행 이동', flow:'해안 평행', observed:'2026-08-13 10:00'},
+  '오륙도·이기대 해역': {temp:27.1, previousTemp:26.9, current:'남쪽 → 외해 방향', flow:'외해 방향', observed:'2026-08-13 10:00'},
+  '기장·일광 해수욕장': {temp:27.3, previousTemp:27.0, current:'북동쪽 → 외해 방향', flow:'외해 방향', observed:'2026-08-13 10:00'}
+};
+
+function estimateJellyRisk(placeName){
+  const d = jellyRiskTestData[placeName] || {temp:27, previousTemp:27, current:'자료 없음', flow:'자료 없음', observed:'2026-08-13 10:00'};
+  let score = 20;
+  const reasons = [];
+  // 임시 가중치: 20~30℃에 가까울수록 활동에 유리하다고 가정한 서비스용 기준입니다.
+  const tempScore = Math.max(0, Math.min(35, 35 - Math.abs(d.temp - 27) * 7));
+  score += tempScore;
+  if (d.temp > d.previousTemp) { score += 8; reasons.push('최근 수온이 상승'); }
+  if (d.flow === '해변 방향') { score += 15; reasons.push('해류가 해변 방향으로 흐름'); }
+  else if (d.flow === '외해 방향') { score -= 5; reasons.push('해류가 외해 방향으로 흐름'); }
+  else if (d.flow === '해안 평행') { score += 6; reasons.push('해류가 해안선을 따라 이동'); }
+  score = Math.max(0, Math.min(100, Math.round(score)));
+  const level = score <= 33 ? '낮음' : score <= 66 ? '보통' : '높음';
+  const levelClass = score <= 33 ? 'low' : score <= 66 ? 'mid' : 'high';
+  return {d, score, level, levelClass, reasons};
+}
+
+function jellyRiskMarkup(placeName){
+  const r = estimateJellyRisk(placeName);
+  const reason = r.reasons.length ? r.reasons.join(' 및 ') + '하여 위험도가 ' + r.level + '으로 추정됩니다.' : '현재 입력된 조건을 종합해 위험도가 ' + r.level + '으로 추정됩니다.';
+  return '<section class="jelly-risk-box"><h3>해파리 출몰 위험도 추정</h3><div class="jelly-risk-summary"><span class="jelly-risk-score">'+r.score+'점 / 100</span><span class="jelly-risk-level '+r.levelClass+'">'+r.level+'</span></div><p>'+reason+'</p><p><b>현재 수온:</b> '+r.d.temp+'℃<br><b>해류 방향:</b> '+r.d.current+'<br><b>위험도 산정:</b> 수온 적합도 + 수온 변화 + 해류 방향</p><p class="jelly-risk-meta">기준 시간: '+r.d.observed+' · 테스트 데이터<br>실시간 과학 예측 AI가 아닌 공개자료 기반 위험도 추정 모델입니다.</p><p class="jelly-risk-meta jelly-risk-sources">출처: <a href="https://m.badatime.com/view_temp.jsp?idx=1" target="_blank" rel="noopener">바다타임 부산 바다수온</a> · <a href="https://www.weather.go.kr/w/image/chart/ocean/current.do" target="_blank" rel="noopener">기상청 해양순환</a></p></section>';
+}
+
+window.addEventListener('load', function(){
+  if (window.__jellyRiskWrapped || typeof window.selectBusan !== 'function') return;
+  const originalSelectBusan = window.selectBusan;
+  window.selectBusan = function(i){
+    originalSelectBusan(i);
+    const place = busanAreas[i];
+    const detail = document.getElementById('detail');
+    if (place && detail) detail.insertAdjacentHTML('beforeend', jellyRiskMarkup(place.n));
+  };
+  window.__jellyRiskWrapped = true;
+});
+
+window.addEventListener('load', function(){
+  const brand = document.querySelector('header b');
+  if (brand) brand.textContent = 'jelly map';
+  const photoButton = document.querySelector('.photo');
+  if (photoButton) photoButton.remove();
+  const photoInput = document.getElementById('photoInput');
+  if (photoInput) photoInput.remove();
+  if (!document.getElementById('riskSourceFooter')) {
+    const footer = document.createElement('footer');
+    footer.id = 'riskSourceFooter';
+    footer.style.cssText = 'margin-top:22px;padding:12px 2px 4px;border-top:1px solid #d5e1e6;color:#405b6b;font-size:9px;line-height:1.7;text-align:center;font-weight:600;';
+    footer.innerHTML = '위험도 기준: 0~33 낮음 · 34~66 보통 · 67~100 높음<br>수온·수온 변화·해류 방향을 반영한 설명 가능한 임시 점수 모델입니다.<br>출처: <a href="https://m.badatime.com/view_temp.jsp?idx=1" target="_blank" rel="noopener" style="color:#234e66;font-weight:700">바다타임 부산 바다수온</a> · <a href="https://www.weather.go.kr/w/image/chart/ocean/current.do" target="_blank" rel="noopener" style="color:#234e66;font-weight:700">기상청 해양순환</a>';
+    const main = document.querySelector('main');
+    if (main) main.appendChild(footer);
+  }
+  const headerButton = document.querySelector('header button');
+  if (headerButton && !document.getElementById('languageSelect')) {
+    headerButton.textContent = '🌐';
+    headerButton.setAttribute('aria-label', '언어 설정');
+    const select = document.createElement('select');
+    select.id = 'languageSelect';
+    select.title = '언어 설정';
+    select.style.cssText = 'position:absolute;right:18px;top:62px;z-index:10;border:1px solid #cfe4ea;border-radius:9px;background:#fff;color:#234e66;padding:8px;font-size:12px;box-shadow:0 4px 12px #c7dce3;display:none;';
+    [['ko','한국어'],['en','English'],['ja','日本語'],['zh','中文']].forEach(function(item){
+      const option = document.createElement('option'); option.value=item[0]; option.textContent=item[1]; select.appendChild(option);
+    });
+    document.body.appendChild(select);
+    headerButton.onclick = function(){ select.style.display = select.style.display === 'none' ? 'block' : 'none'; };
+    const translations = {
+      ko:{small:'해파리 알림센터',today:'TODAY · 08.12',hero:'오늘 바다,',hero2:'안전하게 즐겨요',desc:'원하는 해안 지역을 선택해 상태를 확인하세요.',map:'대한민국 전체 해파리 위험지도',sub:'우리나라 바다 전체 · 예시 데이터',all:'◎ 전체보기',areas:'주요 관측 지역',jelly:'해파리 종류 보기'},
+      en:{small:'Jellyfish Alert Center',today:'TODAY · 08.12',hero:'The sea today,',hero2:'Enjoy it safely',desc:'Select a coastal area to check its condition.',map:'Korea Jellyfish Risk Map',sub:'All Korean waters · Sample data',all:'◎ View all',areas:'Main observation areas',jelly:'View jellyfish species'},
+      ja:{small:'クラゲアラートセンター',today:'TODAY · 08.12',hero:'今日の海、',hero2:'安全に楽しもう',desc:'海岸地域を選択して状態を確認してください。',map:'韓国クラゲ危険マップ',sub:'韓国周辺海域 · サンプルデータ',all:'◎ 全体を見る',areas:'主な観測地域',jelly:'クラゲの種類を見る'},
+      zh:{small:'水母警报中心',today:'TODAY · 08.12',hero:'今天的大海，',hero2:'安全地享受吧',desc:'选择海岸地区查看当前状态。',map:'韩国水母风险地图',sub:'韩国海域 · 示例数据',all:'◎ 查看全部',areas:'主要观测地区',jelly:'查看水母种类'}
+    };
+    function applyLanguage(lang){
+      const t=translations[lang]||translations.ko;
+      document.querySelector('header small').textContent=t.small;
+      document.querySelector('.hero>div>small').textContent=t.today;
+      document.querySelector('.hero h1').innerHTML=t.hero+'<br><b>'+t.hero2+'</b>';
+      document.querySelector('.hero p').textContent=t.desc;
+      document.getElementById('mapTitle').textContent=t.map;
+      document.getElementById('mapSub').textContent=t.sub;
+      document.querySelector('.map-title button').textContent=t.all;
+      document.querySelector('.area-list h2').textContent=t.areas;
+      const jellyButton=document.getElementById('jellyTypesButton'); if(jellyButton) jellyButton.textContent=t.jelly;
+      document.documentElement.lang=lang;
+      localStorage.setItem('jellyMapLanguage',lang);
+      const labels={
+        ko:{'응급처치':'응급처치','응급처치 보기':'응급처치 보기','지도 다시 보기':'지도 다시 보기','해파리에서 쏘였을 때':'해파리에 쏘였을 때','사진 분석 결과':'사진 분석 결과','부산에서 자주 보이는 해파리':'부산에서 자주 보이는 해파리','해파리 출몰 위험도 추정':'해파리 출몰 위험도 추정'},
+        en:{'응급처치':'First aid','응급처치 보기':'View first aid','지도 다시 보기':'Back to map','해파리에 쏘였을 때':'Jellyfish sting first aid','사진 분석 결과':'Photo analysis result','부산에서 자주 보이는 해파리':'Jellyfish commonly seen near Busan','해파리 출몰 위험도 추정':'Estimated jellyfish risk'},
+        ja:{'응급처치':'応急処置','응급처치 보기':'応急処置を見る','지도 다시 보기':'地図に戻る','해파리에 쏘였을 때':'クラゲに刺されたとき','사진 분석 결과':'写真分析結果','부산에서 자주 보이는 해파리':'釜山周辺でよく見られるクラゲ','해파리 출몰 위험도 추정':'クラゲ出現リスク推定'},
+        zh:{'응급처치':'急救','응급처치 보기':'查看急救方法','지도 다시 보기':'返回地图','해파리에 쏘였을 때':'被水母蜇伤时','사진 분석 결과':'照片分析结果','부산에서 자주 보이는 해파리':'釜山附近常见的水母','해파리 출몰 위험도 추정':'水母出现风险估计'}
+      }[lang]||{};
+      document.querySelectorAll('.action,.aid,.back,.sheet h2,.jelly-risk-box h3').forEach(function(el){
+        if(!el.dataset.originalText) el.dataset.originalText=el.textContent;
+        const original=el.dataset.originalText;
+        el.textContent=original;
+        Object.keys(labels).forEach(function(k){ if(el.textContent.indexOf(k)!==-1) el.textContent=el.textContent.replace(k,labels[k]); });
+      });
+      const textMap={
+        en:{'주요 관측 지역':'Main observation areas','해류 방향':'Current direction','현재 수온':'Current water temperature','위험도 점수':'Risk score','위험도가 올라간 이유':'Why the risk increased','테스트 데이터':'Test data','낮음':'Low','보통':'Moderate','높음':'High'},
+        ja:{'주요 관측 지역':'主な観測地域','해류 방향':'海流の方向','현재 수온':'現在の水温','위험도 점수':'リスクスコア','위험도가 올라간 이유':'リスクが高い理由','테스트 데이터':'テストデータ','낮음':'低い','보통':'中程度','높음':'高い'},
+        zh:{'주요 관측 지역':'主要观测地区','해류 방향':'海流方向','현재 수온':'当前水温','위험도 점수':'风险分数','위험도가 올라간 이유':'风险上升原因','테스트 데이터':'测试数据','낮음':'低','보통':'中','높음':'高'}
+      }[lang]||{};
+      if(Object.keys(textMap).length){
+        const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);
+        const nodes=[]; let node; while(node=walker.nextNode()) nodes.push(node);
+        nodes.forEach(function(n){ if(!n.__originalText) n.__originalText=n.nodeValue; n.nodeValue=n.__originalText; Object.keys(textMap).forEach(function(k){ if(n.nodeValue.indexOf(k)!==-1) n.nodeValue=n.nodeValue.split(k).join(textMap[k]); }); });
+      }
+    }
+    select.value = localStorage.getItem('jellyMapLanguage') || 'ko';
+    select.onchange = function(){ localStorage.setItem('jellyMapLanguage',select.value); select.style.display='none'; window.location.reload(); };
+    applyLanguage(select.value);
+    setTimeout(function(){ applyLanguage(select.value); }, 800);
+    const allLanguageText={
+      en:{'오늘 바다,':'The sea today,','안전하게 즐겨요':'Enjoy it safely','원하는 해안 지역을 선택해 상태를 확인하세요.':'Select a coastal area to check its condition.','전체보기':'View all','주요 관측 지역':'Main observation areas','응급처치':'First aid','응급처치 보기':'View first aid','지도 다시 보기':'Back to map','현재 해파리 위험도':'Current jellyfish risk','최근 해파리 관측 수':'Recent jellyfish observations','최근 관측 시간':'Latest observation time','관측된 해파리 종류':'Observed jellyfish species','현재 이동 방향':'Current movement direction','예상 이동경로':'Expected movement path','위험도 전망':'Risk outlook','이용자 행동 권고':'Recommended action','해파리 출몰 위험도 추정':'Estimated jellyfish appearance risk','현재 수온':'Current water temperature','해류 방향':'Current direction','위험도 산정':'Risk calculation','낮음':'Low','보통':'Moderate','높음':'High','테스트 데이터':'Test data','출처':'Sources','오늘':'Today','어제':'Yesterday','주의':'Caution','위험':'Danger','안전':'Safe','개체':'individuals','수온':'water temperature','해류':'current','해변 방향':'toward the beach','외해 방향':'toward the open sea','해안 평행':'parallel to the coast','부산에서 자주 보이는 해파리':'Jellyfish commonly seen near Busan','쏘였을 때':'If stung','바닷물로 씻고 촉수를 손으로 만지지 마세요.':'Rinse with seawater and do not touch tentacles with bare hands.'},
+      ja:{'오늘 바다,':'今日の海、','안전하게 즐겨요':'安全に楽しもう','원하는 해안 지역을 선택해 상태를 확인하세요.':'海岸地域を選択して状態を確認してください。','전체보기':'全体を見る','주요 관측 지역':'主な観測地域','응급처치':'応急処置','응급처치 보기':'応急処置を見る','지도 다시 보기':'地図に戻る','현재 해파리 위험도':'現在のクラゲリスク','최근 해파리 관측 수':'最近のクラゲ観測数','최근 관측 시간':'最新の観測時刻','관측된 해파리 종류':'観測されたクラゲの種類','현재 이동 방향':'現在の移動方向','예상 이동경로':'予想移動経路','위험도 전망':'リスク予測','이용자 행동 권고':'利用者への推奨','해파리 출몰 위험도 추정':'クラゲ出現リスク推定','현재 수온':'現在の水温','해류 방향':'海流の方向','위험도 산정':'リスク計算','낮음':'低い','보통':'中程度','높음':'高い','테스트 데이터':'テストデータ','출처':'出典','오늘':'今日','어제':'昨日','주의':'注意','위험':'危険','안전':'安全','개체':'個体','수온':'水温','해류':'海流','해변 방향':'海岸方向','외해 방향':'外海方向','해안 평행':'海岸線に平行','부산에서 자주 보이는 해파리':'釜山周辺でよく見られるクラゲ','쏘였을 때':'刺されたとき','바닷물로 씻고 촉수를 손으로 만지지 마세요.':'海水で洗い、触手を素手で触らないでください。'},
+      zh:{'오늘 바다,':'今天的大海，','안전하게 즐겨요':'安全地享受吧','원하는 해안 지역을 선택해 상태를 확인하세요.':'选择海岸地区查看状态。','전체보기':'查看全部','주요 관측 지역':'主要观测地区','응급처치':'急救','응급처치 보기':'查看急救方法','지도 다시 보기':'返回地图','현재 해파리 위험도':'当前水母风险','최근 해파리 관측 수':'最近水母观测数','최근 관측 시간':'最近观测时间','관측된 해파리 종류':'观测到的水母种类','현재 이동 방향':'当前移动方向','예상 이동경로':'预计移动路线','위험도 전망':'风险预测','이용자 행동 권고':'行动建议','해파리 출몰 위험도 추정':'水母出现风险估计','현재 수온':'当前水温','해류 방향':'海流方向','위험도 산정':'风险计算','낮음':'低','보통':'中','높음':'高','테스트 데이터':'测试数据','출처':'来源','오늘':'今天','어제':'昨天','주의':'注意','위험':'危险','안전':'安全','개체':'个体','수온':'水温','해류':'海流','해변 방향':'海滩方向','외해 방향':'外海方向','해안 평행':'沿海岸线','부산에서 자주 보이는 해파리':'釜山附近常见的水母','쏘였을 때':'被蜇伤时','바닷물로 씻고 촉수를 손으로 만지지 마세요.':'请用海水冲洗，不要徒手触碰触手。'}
+    };
+    function translateAllText(){
+      const mapText=allLanguageText[select.value]; if(!mapText) return;
+      const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT); const nodes=[]; let n;
+      while(n=walker.nextNode()) nodes.push(n);
+      nodes.forEach(function(node){
+        if(!node.__jellyOriginal) node.__jellyOriginal=node.nodeValue;
+        let value=node.__jellyOriginal;
+        Object.keys(mapText).forEach(function(key){ value=value.split(key).join(mapText[key]); });
+        node.nodeValue=value;
+      });
+    }
+    const translationObserver=new MutationObserver(function(){ if(!translationObserver.busy){ translationObserver.busy=true; translateAllText(); translationObserver.busy=false; } });
+    translationObserver.observe(document.body,{childList:true,subtree:true});
+    const originalApplyLanguage=applyLanguage;
+    applyLanguage=function(lang){ originalApplyLanguage(lang); setTimeout(translateAllText,0); };
+    setTimeout(translateAllText,1000);
+  }
+});
+
+window.addEventListener('load', function(){
+  const photoButton = document.querySelector('.photo');
+  const actionArea = document.getElementById('homeActions');
+  if ((!photoButton && !actionArea) || document.getElementById('jellyTypesButton')) return;
+
+  const button = document.createElement('button');
+  button.id = 'jellyTypesButton';
+  button.className = 'jelly-types-button';
+  button.textContent = '해파리 종류 보기';
+  button.onclick = function(){
+    document.getElementById('mapPanel').hidden = true;
+    document.getElementById('jellyTypesModal').classList.add('show');
+  };
+  if (photoButton) photoButton.insertAdjacentElement('afterend', button);
+  else actionArea.appendChild(button);
+
+  const modal = document.createElement('div');
+  modal.id = 'jellyTypesModal';
+  modal.className = 'modal';
+  modal.innerHTML = '<div class="sheet"><button class="close" aria-label="닫기">×</button>' +
+    '<h2>부산에서 자주 보이는 해파리</h2>' +
+    '<p class="note">해파리는 시기와 해류에 따라 출현 종류와 개체 수가 달라질 수 있습니다.</p>' +
+    '<ul class="jelly-types-list">' +
+    '<li><div class="jelly-info"><img src="C:\\Users\\안녕하~1\\AppData\\Local\\Temp\\codex-clipboard-00d32318-99aa-45f7-8f18-ca54c96751ec.png" alt="노무라입깃해파리"><div><b>노무라입깃해파리</b><br>몸집이 매우 크고 여름철 부산 연안에서 종종 관찰됩니다. 촉수가 길어 가까이 가지 않는 것이 안전합니다.</div></div></li>' +
+    '<li><div class="jelly-info"><img src="C:\\Users\\안녕하~1\\AppData\\Local\\Temp\\codex-clipboard-2c04a326-0a7a-4b3b-8634-3c3e330cd3f3.png" alt="보름달물해파리"><div><b>보름달물해파리</b><br>투명한 원형 몸체에 네 개의 생식소가 보이는 흔한 해파리입니다. 자극이 약해도 피부에 닿으면 따가울 수 있습니다.</div></div></li>' +
+    '<li><div class="jelly-info"><img src="C:\\Users\\안녕하~1\\AppData\\Local\\Temp\\codex-clipboard-991c2352-a18e-47bf-9cfe-f968aa2cf3a4.png" alt="작은부레관해파리"><div><b>작은부레관해파리</b><br>푸른색 부레처럼 보이며 바람과 해류를 따라 떠다닙니다. 긴 촉수에 닿지 않도록 특히 주의하세요.</div></div></li>' +
+    '<li><div class="jelly-info"><img src="C:\\Users\\안녕하~1\\AppData\\Local\\Temp\\codex-clipboard-c36fa456-bf49-4291-8dfa-cae5fd3895b3.png" alt="커튼원양해파리"><div><b>커튼원양해파리</b><br>긴 촉수가 커튼처럼 보이는 해파리로, 맨손으로 만지지 말고 발견 시 주변 사람에게 알려주세요.</div></div></li>' +
+    '</ul><div class="urgent"><b>쏘였을 때</b><br>바닷물로 씻고 촉수를 손으로 만지지 마세요. 통증이나 호흡 곤란이 심하면 즉시 119에 연락하세요.</div>' +
+    '</div>';
+  document.body.appendChild(modal);
+  function closeJellyTypes(){
+    modal.classList.remove('show');
+    document.getElementById('mapPanel').hidden = false;
+  }
+  modal.querySelector('.close').onclick = closeJellyTypes;
+  modal.addEventListener('click', function(e){ if(e.target === modal) closeJellyTypes(); });
+
+  function openJellyTypesWindow(){
+    const jellyWindow = window.open('', 'jellyTypesWindow', 'width=480,height=760,resizable=yes,scrollbars=yes');
+    if (!jellyWindow) { alert('새 창이 차단되었습니다. 브라우저에서 팝업을 허용해 주세요.'); return; }
+    jellyWindow.document.open();
+    jellyWindow.document.write(`<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>부산 해파리 종류 안내</title><style>body{margin:0;padding:22px;background:#f1f8fb;color:#12344b;font-family:Arial,'Noto Sans KR',sans-serif}main{max-width:440px;margin:auto;background:#fff;border-radius:20px;padding:20px;box-shadow:0 8px 24px #dbe6ea}h1{font-size:22px;margin:0 0 8px;color:#092f4f}p{font-size:12px;line-height:1.6;color:#718494}.jelly{background:#f1f8fb;border-radius:12px;padding:12px;margin:10px 0;font-size:12px;line-height:1.7}.jelly b{color:#0d78a8}.urgent{background:#fff0ed;border-radius:12px;padding:12px;margin-top:14px;font-size:12px;line-height:1.7;color:#993d31}</style></head><body><main><h1>부산에서 자주 보이는 해파리</h1><p>해파리는 시기와 해류에 따라 출현 종류와 개체 수가 달라질 수 있습니다.</p><div class="jelly"><b>노무라입깃해파리</b><br>몸집이 매우 크고 여름철 부산 연안에서 종종 관찰됩니다. 촉수가 길어 가까이 가지 않는 것이 안전합니다.</div><div class="jelly"><b>보름달물해파리</b><br>투명한 원형 몸체에 네 개의 생식소가 보이는 흔한 해파리입니다. 피부에 닿으면 따가울 수 있습니다.</div><div class="jelly"><b>작은부레관해파리</b><br>푸른색 부레처럼 보이며 긴 촉수에 닿지 않도록 특히 주의해야 합니다.</div><div class="jelly"><b>커튼원양해파리</b><br>긴 촉수가 커튼처럼 보이는 해파리입니다. 발견해도 맨손으로 만지지 마세요.</div><div class="urgent"><b>쏘였을 때</b><br>바닷물로 씻고 촉수를 손으로 만지지 마세요. 통증이나 호흡 곤란이 심하면 즉시 119에 연락하세요.</div></main></body></html>`);
+    jellyWindow.document.close();
+    jellyWindow.focus();
+  }
+});
+</script>
+
+<script>
+// Start the risk map near Busan while preserving the existing map controls.
+window.addEventListener('load', function () {
+  setTimeout(function () {
+    if (typeof map !== 'undefined') map.setView([35.16, 129.15], 10);
+  }, 100);
+});
+</script>
+<style>
+.jelly-route-arrow{background:transparent;border:0;color:#e84e4e;font-size:22px;font-weight:900;text-shadow:0 1px 2px #fff;line-height:20px}
+</style>
+<script>
+function addRouteArrows(){
+  if(typeof map==='undefined'||typeof places==='undefined')return;
+  places.forEach(function(o){
+    const color=o.c==='danger'?'#e95757':o.c==='caution'?'#efb841':'#20b486';
+    const a=o.p[1], b=o.p[2];
+    // Leaflet 좌표는 [위도, 경도], CSS 화살표의 0도는 오른쪽(동쪽) 기준입니다.
+    // 따라서 점선의 마지막 구간과 동일한 화면 방향으로 보정합니다.
+    const angle=Math.atan2(-(b[0]-a[0]),b[1]-a[1])*180/Math.PI;
+    L.marker(a,{interactive:false,icon:L.divIcon({className:'jelly-route-arrow',html:'<span style="display:block;color:'+color+';transform:rotate('+angle+'deg)">➤</span>',iconSize:[24,24],iconAnchor:[12,12]})}).addTo(map);
+  });
+}
+window.addEventListener('load',function(){setTimeout(addRouteArrows,300)});
+</script>
+<script>const extraJellyAreas=[{n:'여수 오동도·돌산',r:'안전',c:'safe',e:'🟢',count:2,t:'오늘 08:05',s:'보름달물해파리',dir:'남동쪽 → 외해 방향',ad:'입수 가능 · 현장 표지 확인',p:[[34.68,127.78],[34.73,127.75],[34.78,127.70]]},{n:'통영 한산도·미륵도',r:'주의',c:'caution',e:'🟡',count:8,t:'오늘 08:50',s:'노무라입깃해파리',dir:'동쪽 → 해안 평행 이동',ad:'주의 필요 · 안내방송 확인',p:[[34.78,128.42],[34.82,128.43],[34.87,128.47]]},{n:'포항 영일대',r:'주의',c:'caution',e:'🟡',count:9,t:'오늘 07:30',s:'보름달물해파리',dir:'북동쪽 → 해안 접근',ad:'주의 필요 · 보호장비 권장',p:[[36.00,129.42],[36.05,129.40],[36.11,129.43]]},{n:'속초 대포항·속초해변',r:'안전',c:'safe',e:'🟢',count:1,t:'어제 17:20',s:'유령해파리',dir:'북쪽 → 외해 방향',ad:'입수 가능 · 현장 표지 확인',p:[[38.15,128.63],[38.20,128.60],[38.25,128.57]]},{n:'인천 을왕리·왕산',r:'주의',c:'caution',e:'🟡',count:5,t:'오늘 06:55',s:'보름달물해파리',dir:'서쪽 → 해안 평행 이동',ad:'주의 필요 · 어린이 보호',p:[[37.42,126.35],[37.45,126.34],[37.49,126.30]]},{n:'보령 대천해수욕장',r:'위험',c:'danger',e:'🔴',count:18,t:'오늘 09:05',s:'노무라입깃해파리',dir:'남서쪽 → 해안 접근',ad:'입수 자제 · 현장 안내 확인',p:[[36.28,126.48],[36.31,126.50],[36.35,126.53]]}];window.addEventListener('load',()=>setTimeout(()=>{if(typeof places==='undefined'||typeof map==='undefined')return;places.push(...extraJellyAreas);extraJellyAreas.forEach((o,k)=>{const i=places.length-extraJellyAreas.length+k,color=o.c==='danger'?'#e95757':o.c==='caution'?'#efb841':'#20b486';L.circleMarker(o.p[1],{radius:9,fillColor:color,color:'#fff',weight:3,fillOpacity:1}).addTo(map).on('click',()=>selectArea(i));L.polyline(o.p,{color,weight:3,dashArray:'7 7'}).addTo(map);const a=o.p[1],b=o.p[2],angle=Math.atan2(-(b[0]-a[0]),b[1]-a[1])*180/Math.PI;L.marker(a,{interactive:false,icon:L.divIcon({className:'jelly-route-arrow',html:'<span style="display:block;color:'+color+';transform:rotate('+angle+'deg)">➤</span>',iconSize:[24,24],iconAnchor:[12,12]})}).addTo(map);list.insertAdjacentHTML('beforeend',`<article class="area" onclick="selectArea(${i})"><span class="emoji">${o.e}</span><div><b>${o.n}</b><small>${o.t} · ${o.s}</small></div><span class="pill ${o.c}">${o.r}</span></article>`)});},350));</script>
+<script>
+const busanAreas=[
+ {n:'해운대·광안리 해수욕장',r:'주의',c:'caution',e:'🟡',count:12,t:'오늘 09:20',s:'노무라입깃해파리',dir:'동남동 → 해안 방향',ad:'주의 필요 · 입수 전 안내 확인',p:[[35.14,129.18],[35.15,129.16],[35.16,129.14]]},
+ {n:'송정 해수욕장',r:'안전',c:'safe',e:'🟢',count:2,t:'오늘 08:40',s:'보름달물해파리',dir:'동쪽 → 외해 방향',ad:'입수 가능 · 현장 표지 확인',p:[[35.17,129.22],[35.18,129.21],[35.19,129.20]]},
+ {n:'다대포 해수욕장',r:'위험',c:'danger',e:'🔴',count:21,t:'오늘 07:55',s:'작은부레관해파리',dir:'남동쪽 → 해안 접근',ad:'입수 자제 · 해수욕장 안내 확인',p:[[35.03,128.95],[35.04,128.97],[35.05,128.99]]},
+ {n:'태종대·영도 해역',r:'주의',c:'caution',e:'🟡',count:7,t:'오늘 08:15',s:'노무라입깃해파리',dir:'북동쪽 → 해안 평행 이동',ad:'주의 필요 · 보호장비 권장',p:[[35.04,129.08],[35.05,129.09],[35.07,129.10]]},
+ {n:'오륙도·이기대 해역',r:'안전',c:'safe',e:'🟢',count:1,t:'어제 17:30',s:'보름달물해파리',dir:'남쪽 → 외해 방향',ad:'입수 가능 · 현장 표지 확인',p:[[35.10,129.13],[35.11,129.14],[35.12,129.15]]},
+ {n:'기장·일광 해수욕장',r:'주의',c:'caution',e:'🟡',count:8,t:'오늘 08:05',s:'보름달물해파리',dir:'남서쪽 → 해안 접근',ad:'주의 필요 · 어린이 보호',p:[[35.25,129.24],[35.27,129.25],[35.29,129.26]]}
+];
+window.addEventListener('load',()=>setTimeout(()=>{
+ const title=document.querySelector('.map-title');
+ if(!title||typeof map==='undefined')return;
+ const btn=document.createElement('button');btn.textContent='부산만 보기';btn.style.marginLeft='5px';btn.onclick=showBusan;title.appendChild(btn);
+ function showBusan(){
+   map.setView([35.16,129.15],10);document.getElementById('mapTitle').textContent='부산 해역 해파리 위험지도';document.getElementById('mapSub').textContent='부산 주요 해수욕장·해역 · 예시 데이터';
+   const list=document.getElementById('list');if(!list)return;list.innerHTML=busanAreas.map((o,i)=>`<article class="area" onclick="selectBusan(${i})"><span class="emoji">${o.e}</span><div><b>${o.n}</b><small>${o.t} · ${o.s}</small></div><span class="pill ${o.c}">${o.r}</span></article>`).join('');
+   busanAreas.forEach(o=>{const color=o.c==='danger'?'#e95757':o.c==='caution'?'#efb841':'#20b486';L.circleMarker(o.p[1],{radius:8,fillColor:color,color:'#fff',weight:3,fillOpacity:1}).addTo(map).on('click',()=>selectBusan(busanAreas.indexOf(o)));L.polyline(o.p,{color,weight:3,dashArray:'7 7'}).addTo(map)});
+ }
+ window.selectBusan=function(i){const o=busanAreas[i];document.getElementById('detail').innerHTML=`<h1>${o.e} ${o.n}</h1><p><b>현재 해파리 위험도: ${o.r}</b></p><p><b>최근 해파리 관측 수</b><br>${o.count}개체</p><p><b>최근 관측 시간</b><br>${o.t}</p><p><b>관측된 해파리 종류</b><br>${o.s}<br>사진만으로 종류를 확정할 수 없으며 전문가 확인이 필요합니다.</p><p><b>현재 이동 방향</b><br>${o.dir}</p><p class="route"><b>예상 이동경로</b><br>현재 위치 → 예상 1시간 후 → 예상 3시간 후</p><p class="advice"><b>이용자 행동 권고</b><br>${o.ad}</p>`;mapPanel.hidden=true;homeActions.hidden=true;areas.hidden=true;detailPanel.hidden=false;scrollTo(0,0)};
+window.showBusan=showBusan;
+},500));
+</script>
+<script>
+// 부산 해변별 이동경로에도 동일한 화살표를 표시합니다.
+window.addEventListener('load', function(){
+  setTimeout(function(){
+    if (typeof map === 'undefined' || typeof busanAreas === 'undefined') return;
+    busanAreas.forEach(function(o){
+      const color = o.c === 'danger' ? '#e95757' : o.c === 'caution' ? '#efb841' : '#20b486';
+      const a = o.p[1], b = o.p[2];
+      const angle = Math.atan2(-(b[0]-a[0]), b[1]-a[1]) * 180 / Math.PI;
+      L.marker(a, {interactive:false, icon:L.divIcon({
+        className:'jelly-route-arrow',
+        html:'<span style="display:block;color:'+color+';transform:rotate('+angle+'deg)">➤</span>',
+        iconSize:[24,24], iconAnchor:[12,12]
+      })}).addTo(map);
+    });
+  }, 900);
+});
+</script>
