@@ -7,6 +7,13 @@ document.addEventListener('click',function(e){if(e.target.closest('.action')||e.
 </script>
 <script>
 window.addEventListener('load', function(){
+  document.querySelectorAll('.hero small').forEach(function(el){
+    if (el.textContent.indexOf('TODAY') !== -1) el.textContent = 'TODAY · 08.13';
+  });
+});
+</script>
+<script>
+window.addEventListener('load', function(){
   const languageSelect=document.getElementById('languageSelect');
   if(languageSelect) languageSelect.remove();
   const headerButton=document.querySelector('header button');
