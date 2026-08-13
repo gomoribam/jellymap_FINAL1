@@ -5,6 +5,14 @@ function hideMapForAction(){['mapPanel','homeActions','areas'].forEach(id=>{cons
 function restoreMapAfterAction(){['mapPanel','homeActions','areas'].forEach(id=>{const el=document.getElementById(id);if(el)el.hidden=false})}
 document.addEventListener('click',function(e){if(e.target.closest('.action')||e.target.closest('.photo'))hideMapForAction();if(e.target.closest('#aidModal .close')||e.target.closest('#photoModal .close'))restoreMapAfterAction()});
 </script>
+
+<style>
+/* 오른쪽 상단 언어 변경 컨트롤 숨김 */
+header > button,
+#languageSelect { display: none !important; }
+/* jelly map 아래 날짜 표시 숨김 */
+.hero > div > small { display: none !important; }
+</style>
 <script>
 window.addEventListener('load', function(){
   document.querySelectorAll('.hero small').forEach(function(el){
